@@ -1,0 +1,5 @@
+djangorestframework
+Pillow
+reportlab
+PyMuPDF
+django-cors-headers
