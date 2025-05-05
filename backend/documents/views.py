@@ -1,4 +1,4 @@
-# documents/views.py
+from rest_framework.permissions import AllowAny
 import io
 import fitz  # PyMuPDF
 from PIL import Image, ImageDraw, ImageFont
@@ -9,13 +9,24 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Document, Signature
 from .serializers import DocumentSerializer, SignatureSerializer
 
+
+
 class DocumentViewSet(viewsets.ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
     parser_classes = (MultiPartParser, FormParser)
+    permission_classes = [AllowAny]  # or IsAuthenticated depending on your case
 
-    def perform_create(self, serializer):
-        serializer.save(uploaded_by=self.request.user)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()  # Remove uploaded_by for now unless user is logged in
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        print("🚨 Serializer errors:", serializer.errors)  # 👈 Add this to see the issue
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class SignatureViewSet(viewsets.ModelViewSet):
     queryset = Signature.objects.all()

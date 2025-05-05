@@ -8,7 +8,17 @@ export interface SignaturePayload {
   pageNumber: number;
 }
 
-export const submitSignature = async (payload: SignaturePayload) => {
+export interface SignatureResponse {
+  id: number;
+  document: number;
+  signature_url: string;
+  x: number;
+  y: number;
+  page_number: number;
+  signed_at: string;
+}
+
+export const submitSignature = async (payload: SignaturePayload): Promise<SignatureResponse> => {
   const formData = new FormData();
   formData.append("document", payload.documentId.toString());
   formData.append("signature_image", payload.signatureImage, "signature.png");
@@ -16,7 +26,7 @@ export const submitSignature = async (payload: SignaturePayload) => {
   formData.append("y", payload.y.toString());
   formData.append("page_number", payload.pageNumber.toString());
 
-  const response = await API.post("signatures/", formData, {
+  const response = await API.post<SignatureResponse>("signatures/", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 

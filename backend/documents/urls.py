@@ -1,19 +1,25 @@
 from django.urls import path, include
-from .invite_views import SendInviteView
 from rest_framework.routers import DefaultRouter
+
 from .views import DocumentViewSet, SignatureViewSet
+from .invite_views import SendInviteView
 from .otp_views import SendOTPView, VerifyOTPView
 from .audit_views import generate_audit_report
 
 router = DefaultRouter()
-router.register(r'documents', DocumentViewSet)
-router.register(r'signatures', SignatureViewSet)
-
+router.register(r'documents', DocumentViewSet, basename='documents')
+router.register(r'signatures', SignatureViewSet, basename='signatures')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('send-invite/', SendInviteView.as_view()),
-    path('audit-report/<int:document_id>/', generate_audit_report),
-    path('send-otp/', SendOTPView.as_view()),
-    path('verify-otp/', VerifyOTPView.as_view()),
+
+    # Invite someone to sign
+    path('send-invite/', SendInviteView.as_view(), name='send-invite'),
+
+    # OTP endpoints
+    path('send-otp/', SendOTPView.as_view(), name='send-otp'),
+    path('verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),
+
+    # Audit trail PDF download
+    path('audit-report/<int:document_id>/', generate_audit_report, name='audit-report'),
 ]
