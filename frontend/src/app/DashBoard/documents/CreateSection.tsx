@@ -11,9 +11,12 @@ import FontFamily from "@tiptap/extension-font-family";
 import FontSize from "@tiptap/extension-font-size";
 import html2pdf from "html2pdf.js";
 import { uploadDocument } from "@/services/documentService";
+import { RootState } from "@/redux/store";
+import { useSelector } from "react-redux";
 
 const CreateSection: React.FC = () => {
   const [title, setTitle] = useState("");
+  const auth_user = useSelector((state: RootState) => state.auth.user);
 
   const editor = useEditor({
     extensions: [
@@ -34,13 +37,17 @@ const CreateSection: React.FC = () => {
       alert("Title is required.");
       return;
     }
+    if (typeof auth_user?.user_id !== "number") {
+      alert("User ID is missing. Please log in again.");
+      return;
+    }
 
     const html = editor.getHTML();
     const blob = new Blob([html], { type: "text/html" });
     const file = new File([blob], `${title}.html`, { type: "text/html" });
 
     try {
-      await uploadDocument({ title, file });
+      await uploadDocument({ title, file, user_id: auth_user?.user_id });
       alert("Document saved successfully!");
       editor.commands.setContent("<p>Start typing your document here...</p>");
       setTitle("");
