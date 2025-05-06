@@ -26,3 +26,18 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     def get_departments(self, obj):
         return list(obj.user.groups.values_list('name', flat=True))
+
+class UserWithProfileSerializer(serializers.ModelSerializer):
+    profile = UserProfileSerializer(read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "is_staff",
+            "profile",
+        ]

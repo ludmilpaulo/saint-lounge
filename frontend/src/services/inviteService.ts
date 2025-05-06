@@ -6,7 +6,7 @@ export interface InvitePayload {
 }
 
 export const sendInvite = async (payload: InvitePayload) => {
-  const response = await API.post("send-invite/", {
+  const response = await API.post("/doc/send-invite/", {
     email: payload.email,
     document_id: payload.documentId,
   });

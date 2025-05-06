@@ -1,7 +1,9 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from .views import DocumentViewSet, SignatureViewSet
+from .signuture import SignatureViewSet
+
+from .views import DocumentViewSet
 from .invite_views import SendInviteView
 from .otp_views import SendOTPView, VerifyOTPView
 from .audit_views import generate_audit_report

@@ -1,55 +1,50 @@
-"use client";
-import React, { useRef, useState } from "react";
-import SignatureCanvas from "react-signature-canvas";
-import { Document } from "@/services/documentService";
-import { submitSignature } from "@/services/signatureService";
+'use client';
+import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
+import { Document as Doc } from '@/services/documentService';
+
+import { v4 as uuidv4 } from 'uuid';
+import DraggableElement from './DraggableElement';
+import PDFViewer from './PDFViewer';
+import SignaturePadModal from './SignaturePadModal';
 
 interface Props {
-  documents: Document[];
+  documents: Doc[];
   onLoading: (state: boolean) => void;
 }
 
 const SignSection: React.FC<Props> = ({ documents, onLoading }) => {
-  const [selectedDoc, setSelectedDoc] = useState<number | null>(null);
-  const [page, setPage] = useState<number>(1);
-  const [x, setX] = useState<number>(50);
-  const [y, setY] = useState<number>(100);
-  const sigRef = useRef<SignatureCanvas>(null);
+  const auth_user = useSelector((state: RootState) => state.auth.user);
+  const [selectedDoc, setSelectedDoc] = useState<Doc | null>(null);
+  const [showPad, setShowPad] = useState(false);
+  const [elements, setElements] = useState<{ id: string; src: string }[]>([]);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [numPages, setNumPages] = useState(1);
 
-  const handleSubmit = async () => {
-    if (!selectedDoc || !sigRef.current) return alert("All fields required");
+  const handleSaveSignature = (dataUrl: string) => {
+    const newElement = { id: uuidv4(), src: dataUrl };
+    setElements((prev) => [...prev, newElement]);
+  };
 
-    const canvas = sigRef.current.getTrimmedCanvas();
-    const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => b && resolve(b), "image/png")!);
-
-    try {
-      onLoading(true);
-      await submitSignature({
-        documentId: selectedDoc,
-        signatureImage: blob,
-        x,
-        y,
-        pageNumber: page,
-      });
-      alert("Signature submitted!");
-      sigRef.current.clear();
-    } catch {
-      alert("Failed to submit signature.");
-    } finally {
-      onLoading(false);
-    }
+  const handleDeleteElement = (id: string) => {
+    setElements((prev) => prev.filter((el) => el.id !== id));
   };
 
   return (
-    <div className="space-y-4 p-4 bg-white rounded shadow">
-      <h2 className="text-xl font-semibold">Sign Document</h2>
+    <div className="space-y-4">
+      <h2 className="text-2xl font-semibold text-gray-800">Sign Document</h2>
 
       <select
-        value={selectedDoc ?? ""}
-        onChange={(e) => setSelectedDoc(Number(e.target.value))}
-        className="w-full p-2 border rounded"
+        className="p-2 border rounded w-full"
+        value={selectedDoc?.id ?? ''}
+        onChange={(e) => {
+          const doc = documents.find((d) => d.id === Number(e.target.value));
+          setSelectedDoc(doc || null);
+          setElements([]);
+        }}
       >
-        <option value="">Select Document</option>
+        <option value="">Select a document</option>
         {documents.map((doc) => (
           <option key={doc.id} value={doc.id}>
             {doc.title}
@@ -57,52 +52,44 @@ const SignSection: React.FC<Props> = ({ documents, onLoading }) => {
         ))}
       </select>
 
+      {selectedDoc && (
+        <div className="relative border shadow-lg rounded p-4 bg-white">
+          <PDFViewer
+            fileUrl={selectedDoc.file_url}
+            pageNumber={pageNumber}
+            numPages={numPages}
+            setPageNumber={setPageNumber}
+          />
+
+          <div className="absolute top-0 left-0 w-full h-full z-30">
+            {elements.map((el) => (
+              <DraggableElement
+                key={el.id}
+                id={el.id}
+                src={el.src}
+                onDelete={handleDeleteElement}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-4">
-        <input
-          type="number"
-          placeholder="Page Number"
-          value={page}
-          onChange={(e) => setPage(Number(e.target.value))}
-          className="w-1/3 p-2 border rounded"
-        />
-        <input
-          type="number"
-          placeholder="X Position"
-          value={x}
-          onChange={(e) => setX(Number(e.target.value))}
-          className="w-1/3 p-2 border rounded"
-        />
-        <input
-          type="number"
-          placeholder="Y Position"
-          value={y}
-          onChange={(e) => setY(Number(e.target.value))}
-          className="w-1/3 p-2 border rounded"
-        />
-      </div>
-
-      <div className="border rounded bg-white shadow-inner">
-        <SignatureCanvas
-          penColor="black"
-          canvasProps={{ width: 400, height: 200, className: "rounded" }}
-          ref={sigRef}
-        />
-      </div>
-
-      <div className="flex gap-3">
         <button
-          onClick={() => sigRef.current?.clear()}
-          className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
-        >
-          Clear
-        </button>
-        <button
-          onClick={handleSubmit}
+          onClick={() => setShowPad(true)}
           className="bg-green-600 text-white px-4 py-2 rounded"
         >
-          Submit Signature
+          Add Signature
         </button>
+        {/* Extend for initials/date if needed */}
       </div>
+
+      {showPad && (
+        <SignaturePadModal
+          onClose={() => setShowPad(false)}
+          onSave={handleSaveSignature}
+        />
+      )}
     </div>
   );
 };

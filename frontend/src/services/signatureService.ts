@@ -6,6 +6,7 @@ export interface SignaturePayload {
   x: number;
   y: number;
   pageNumber: number;
+  userId: number; // 👈 add this
 }
 
 export interface SignatureResponse {
@@ -25,8 +26,10 @@ export const submitSignature = async (payload: SignaturePayload): Promise<Signat
   formData.append("x", payload.x.toString());
   formData.append("y", payload.y.toString());
   formData.append("page_number", payload.pageNumber.toString());
+  formData.append("user_id", payload.userId.toString());
 
-  const response = await API.post<SignatureResponse>("signatures/", formData, {
+
+  const response = await API.post<SignatureResponse>("/doc/signatures/", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 

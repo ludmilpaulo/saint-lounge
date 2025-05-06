@@ -1,13 +1,18 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { getDocuments, Document } from "@/services/documentService";
 import { Transition } from "@headlessui/react";
-import CreateSection from "./documents/CreateSection";
-import SendToSignSection from "./documents/SendToSignSection";
-import SignedSection from "./documents/SignedSection";
-import SignSection from "./documents/SignSection";
-import UploadSection from "./documents/UploadSection";
 
+// ✅ Import only SSR-safe components normally
+import CreateSection from "./documents/CreateSection";
+
+// ✅ Dynamically import the rest to disable SSR
+const UploadSection = dynamic(() => import("./documents/UploadSection"), { ssr: false });
+const SignSection = dynamic(() => import("./documents/SignSection"), { ssr: false });
+const SendToSignSection = dynamic(() => import("./documents/SendToSignSection"), { ssr: false });
+const SignedSection = dynamic(() => import("./documents/SignedSection"), { ssr: false });
 
 const tabs = ["Upload", "Create", "Sign", "Send to Sign", "Signed"];
 
@@ -82,14 +87,17 @@ const Documents: React.FC = () => {
             </ul>
           </>
         )}
+
         {activeTab === "Create" && <CreateSection />}
+
         {activeTab === "Sign" && (
-            <SignSection documents={documents} onLoading={setLoading} />
-            )}
+          <SignSection documents={documents} onLoading={setLoading} />
+        )}
 
         {activeTab === "Send to Sign" && (
           <SendToSignSection documents={documents} onLoading={setLoading} />
         )}
+
         {activeTab === "Signed" && <SignedSection documents={documents} />}
       </div>
 
