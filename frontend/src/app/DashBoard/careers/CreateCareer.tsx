@@ -68,17 +68,26 @@ export default function CreateCareer() {
         <div>
           <label className="block font-semibold mb-1">Description</label>
           <div className="border rounded">
-            <CKEditor
-              editor={ClassicEditor}
-              data={form.description}
-              config={{
-                toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'undo', 'redo'],
-              }}
-              onChange={(_, editor) => {
-                const data = editor.getData();
-                setForm((prev) => ({ ...prev, description: data }));
-              }}
-            />
+          <CKEditor
+          editor={ClassicEditor}
+          data={form.description}
+          config={{
+            toolbar: [
+              'heading', '|',
+              'bold', 'italic', 'underline', 'strikethrough', '|',
+              'fontFamily', 'fontSize', 'fontColor', 'fontBackgroundColor', '|',
+              'alignment', 'outdent', 'indent', '|',
+              'bulletedList', 'numberedList', 'blockQuote', '|',
+              'insertTable', '|',
+              'undo', 'redo'
+            ]
+          }}
+          onChange={(_, editor) => {
+            const data = editor.getData();
+            setForm((prev) => ({ ...prev, description: data }));
+          }}
+        />
+
           </div>
         </div>
 
@@ -89,7 +98,15 @@ export default function CreateCareer() {
               editor={ClassicEditor}
               data={form.requirements}
               config={{
-                toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'undo', 'redo'],
+                toolbar: [
+                  'heading', '|',
+                  'bold', 'italic', 'underline', 'strikethrough', '|',
+                  'fontFamily', 'fontSize', 'fontColor', 'fontBackgroundColor', '|',
+                  'alignment', 'outdent', 'indent', '|',
+                  'bulletedList', 'numberedList', 'blockQuote', '|',
+                  'insertTable', '|',
+                  'undo', 'redo'
+                ]
               }}
               onChange={(_, editor) => {
                 const data = editor.getData();

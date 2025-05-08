@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@ckeditor/ckeditor5-build-classic": "^39.0.1",
-    "@ckeditor/ckeditor5-react": "^5.1.0",
+    "@ckeditor/ckeditor5-react": "^9.5.0",
     "@headlessui/react": "^2.2.2",
     "@reduxjs/toolkit": "^2.7.0",
     "@tailwindcss/typography": "^0.5.16",
