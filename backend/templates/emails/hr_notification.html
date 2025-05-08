@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; }
+    h2 { color: #333333; }
+    p { line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <h2>New Job Application Received</h2>
+  <p><strong>Name:</strong> {{ full_name }}</p>
+  <p><strong>Email:</strong> {{ email }}</p>
+  <p><strong>Position:</strong> {{ title }}</p>
+  <p><strong>Location:</strong> {{ location }}</p>
+  <p><strong>Cover Letter:</strong></p>
+  <pre style="background-color: #f8f8f8; padding: 10px;">{{ cover_letter }}</pre>
+  <p>Login to the admin panel to review the full application and resume.</p>
+</body>
+</html>

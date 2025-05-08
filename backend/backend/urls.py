@@ -7,4 +7,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('doc/', include('documents.urls')),
     path('account/', include('accounts.urls')),
+    path(
+        "ckeditor5/", include("django_ckeditor_5.urls"), name="ck_editor_5_upload_file"
+    ),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

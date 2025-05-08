@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ckeditor/ckeditor5-build-classic": "^39.0.1",
+    "@ckeditor/ckeditor5-react": "^5.1.0",
     "@headlessui/react": "^2.2.2",
     "@reduxjs/toolkit": "^2.7.0",
     "@tailwindcss/typography": "^0.5.16",
@@ -36,6 +38,7 @@
     "react-rnd": "^10.5.2",
     "react-signature-canvas": "^1.1.0-alpha.2",
     "redux-persist": "^6.0.0",
+    "swr": "^2.3.3",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
