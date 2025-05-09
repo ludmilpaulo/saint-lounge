@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "corsheaders",
     'rest_framework',
     "rest_framework.authtoken",
+    'careers',
     'documents',
     'accounts',
     "django_ckeditor_5",
@@ -299,3 +300,18 @@ CKEDITOR_5_CONFIGS = {
         }
     },
 }
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+
+EMAIL_HOST = "ghanadude.com"
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+EMAIL_USE_TLS = False
+
+EMAIL_HOST_USER = "info@ghanadude.com"
+EMAIL_HOST_PASSWORD = "Maitland@2025"
+
+DEFAULT_FROM_EMAIL = "info@ghanadude.com"
+SERVER_EMAIL = "info@ghanadude.com"
+HR_NOTIFICATION_EMAIL = SERVER_EMAIL

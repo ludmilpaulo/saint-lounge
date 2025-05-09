@@ -1,11 +1,11 @@
 from django.db import models
-from ckeditor5.fields import CKEditor5Field
+
 
 class Career(models.Model):
     title = models.CharField(max_length=255)
     location = models.CharField(max_length=100)
-    description = CKEditor5Field("Text", config_name="extends")
-    requirements = CKEditor5Field("Text", config_name="extends")
+    description = models.TextField()      # ← Accepts HTML from CKEditor in frontend
+    requirements = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -20,8 +20,14 @@ class JobApplication(models.Model):
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
     ]
+    
+    LANGUAGE_CHOICES = [
+    ('en', 'English'),
+    ('pt', 'Português'),
+]
 
     career = models.ForeignKey(Career, on_delete=models.CASCADE, related_name='applications')
+    language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES, default='en')
     full_name = models.CharField(max_length=255)
     email = models.EmailField()
     resume = models.FileField(upload_to='resumes/')

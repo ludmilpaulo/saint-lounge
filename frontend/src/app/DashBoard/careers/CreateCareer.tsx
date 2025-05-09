@@ -6,11 +6,12 @@ import axios from 'axios';
 import { Career } from '@/types/Career';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import { baseAPI } from '@/utils/variables';
 
 const fetcher = (url: string) => axios.get(url).then(res => res.data);
 
 export default function CreateCareer() {
-  const { data: careers, mutate } = useSWR<Career[]>('/api/careers/', fetcher);
+  const { data: careers, mutate } = useSWR<Career[]>('/careers/careers/', fetcher);
 
   const [form, setForm] = useState({
     title: '',
@@ -22,7 +23,7 @@ export default function CreateCareer() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post('/api/careers/', form);
+      await axios.post(`${baseAPI}/careers/careers/`, form);
       mutate();
       setForm({ title: '', location: '', description: '', requirements: '' });
       alert('Job posted successfully');
@@ -34,7 +35,7 @@ export default function CreateCareer() {
   const handleDelete = async (id: number) => {
     if (confirm('Are you sure you want to delete this job?')) {
       try {
-        await axios.delete(`/api/careers/${id}/`);
+        await axios.delete(`${baseAPI}/careers/careers/${id}/`);
         mutate();
       } catch (error) {
         console.error('Failed to delete job:', error);

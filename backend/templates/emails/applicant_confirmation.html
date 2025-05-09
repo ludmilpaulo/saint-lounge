@@ -1,18 +1,54 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8" />
+  <title>Application Received</title>
   <style>
-    body { font-family: Arial, sans-serif; }
-    h2 { color: #333333; }
-    p { line-height: 1.5; }
+    body {
+      background-color: #f3f4f6;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      padding: 2rem;
+      color: #1f2937;
+    }
+    .card {
+      background-color: #ffffff;
+      border-radius: 10px;
+      padding: 2rem;
+      max-width: 640px;
+      margin: auto;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
   </style>
 </head>
 <body>
-  <h2>Application Received</h2>
-  <p>Dear {{ full_name }},</p>
-  <p>Thank you for applying for the <strong>{{ title }}</strong> position at our company.</p>
-  <p>We’ve received your application and will be reviewing it shortly.</p>
-  <p>Best regards,<br><strong>HR Team</strong></p>
+  <div class="card">
+    <h2>👋 Hello {{ full_name }},</h2>
+
+    <p>
+      Thank you for applying to the <strong>{{ title }}</strong> position.  
+      We’ve received your application and will review it shortly.
+    </p>
+
+    <p>
+      If you’re selected, our team will contact you for the next steps.  
+      We appreciate your interest!
+    </p>
+
+    <hr style="margin: 2rem 0;" />
+
+    <h2>👋 Olá {{ full_name }},</h2>
+
+    <p>
+      Obrigado por se candidatar à vaga de <strong>{{ title }}</strong>.  
+      Recebemos sua candidatura e iremos analisá-la em breve.
+    </p>
+
+    <p>
+      Se for selecionado(a), nossa equipe entrará em contato com você para os próximos passos.  
+      Agradecemos seu interesse!
+    </p>
+
+    <p style="margin-top: 2rem;">Atenciosamente, / Best regards,<br />Equipe de RH / HR Team</p>
+  </div>
 </body>
 </html>

@@ -3,14 +3,15 @@ import React from 'react';
 import useSWR from 'swr';
 import axios from 'axios';
 import { JobApplication } from '@/types/Career';
+import { baseAPI } from '@/utils/variables';
 
 const fetcher = (url: string) => axios.get(url).then(res => res.data);
 
 export default function ManageApplications() {
-  const { data: applications, mutate } = useSWR<JobApplication[]>('/api/job-applications/', fetcher);
+  const { data: applications, mutate } = useSWR<JobApplication[]>('/careers/job-applications/', fetcher);
 
   const updateStatus = async (id: number, status: JobApplication['status']) => {
-    await axios.patch(`/api/job-applications/${id}/`, { status });
+    await axios.patch(`${baseAPI}/careers/job-applications/${id}/`, { status });
     mutate();
   };
 
