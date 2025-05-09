@@ -14,6 +14,7 @@ const Sidebar: React.FC<SidebarProps> = ({ setActiveComponent, activeComponent }
     { id: "careers", label: "Careers", icon: <FiBriefcase /> },
     { id: "documents", label: "Documents", icon: <FiFileText /> },
     { id: "events", label: "Events", icon: <FiZap /> },
+    { id: "campaign", label: "Campaigns", icon: <FiZap /> },
   ];
 
   return (

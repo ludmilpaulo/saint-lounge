@@ -7,7 +7,6 @@ class CareerSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-
 class JobApplicationSerializer(serializers.ModelSerializer):
     career = CareerSerializer(read_only=True)
     language = serializers.ChoiceField(choices=[('en', 'English'), ('pt', 'Português')], default='en')
@@ -32,4 +31,4 @@ class JobApplicationSerializer(serializers.ModelSerializer):
             'submitted_at',
             'status',
         ]
-        read_only_fields = ['submitted_at', 'status']
+        read_only_fields = ['submitted_at']  # ✅ removed 'status'

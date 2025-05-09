@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "corsheaders",
     'rest_framework',
     "rest_framework.authtoken",
+    'emailmarketing',
     'careers',
     'documents',
     'accounts',

@@ -9,6 +9,7 @@ const Bookings = dynamic(() => import("./Bookings"), { ssr: false });
 const Careers = dynamic(() => import("./Careers"), { ssr: false });
 const Documents = dynamic(() => import("./Documents"), { ssr: false });
 const Events = dynamic(() => import("./Events"), { ssr: false });
+const Campaign = dynamic(() => import("./Campaign"), { ssr: false });
 
 const AdminDashboard: React.FC = () => {
   const [activeComponent, setActiveComponent] = useState("backend");
@@ -32,6 +33,8 @@ const AdminDashboard: React.FC = () => {
         return <Documents />;
       case "events":
         return <Events />;
+      case "campaign":
+        return <Campaign />;
       default:
         return <Backend />;
     }

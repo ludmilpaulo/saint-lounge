@@ -5,7 +5,7 @@ import axios from 'axios';
 import { JobApplication } from '@/types/Career';
 import { baseAPI } from '@/utils/variables';
 
-const fetcher = (url: string) => axios.get(url).then(res => res.data);
+const fetcher = (url: string) => axios.get(`${baseAPI}${url}`).then(res => res.data);
 
 export default function ManageApplications() {
   const { data: applications, mutate } = useSWR<JobApplication[]>('/careers/job-applications/', fetcher);
