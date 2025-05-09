@@ -1,4 +1,5 @@
 'use client';
+
 import { Dialog } from '@headlessui/react';
 
 type Props = {
@@ -10,12 +11,16 @@ type Props = {
 
 export default function PreviewModal({ show, setShow, subject, html }: Props) {
   return (
-    <Dialog open={show} onClose={() => setShow(false)} className="fixed z-50 inset-0 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen px-4">
-        <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-40" />
-        <div className="relative bg-white max-w-2xl w-full mx-auto rounded shadow p-6 z-10">
+    <Dialog open={show} onClose={() => setShow(false)} className="relative z-50">
+      <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
+
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <Dialog.Panel className="bg-white max-w-2xl w-full rounded shadow-lg p-6">
           <Dialog.Title className="text-lg font-bold mb-4">{subject || 'Email Preview'}</Dialog.Title>
-          <div className="border p-4 max-h-[400px] overflow-auto" dangerouslySetInnerHTML={{ __html: html }} />
+          <div
+            className="border p-4 max-h-[400px] overflow-auto"
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
           <div className="flex justify-end mt-4">
             <button
               onClick={() => setShow(false)}
@@ -24,7 +29,7 @@ export default function PreviewModal({ show, setShow, subject, html }: Props) {
               Close
             </button>
           </div>
-        </div>
+        </Dialog.Panel>
       </div>
     </Dialog>
   );

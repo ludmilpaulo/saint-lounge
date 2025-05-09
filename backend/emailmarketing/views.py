@@ -15,17 +15,29 @@ class EmailCampaignViewSet(viewsets.ModelViewSet):
     def user_emails(self, request):
         users = User.objects.exclude(email="").values_list('email', flat=True)
         return Response(list(users))
-
+    
     @action(detail=True, methods=['post'])
     def send(self, request, pk=None):
         campaign = self.get_object()
-        for email in campaign.recipient_list:
-            msg = EmailMultiAlternatives(
-                subject=campaign.subject,
-                body='',
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[email]
-            )
-            msg.attach_alternative(campaign.body_html, "text/html")
-            msg.send(fail_silently=False)
-        return Response({'status': 'sent'})
+        success = True
+
+        try:
+            for email in campaign.recipient_list:
+                msg = EmailMultiAlternatives(
+                    subject=campaign.subject,
+                    body='',
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[email]
+                )
+                msg.attach_alternative(campaign.body_html, "text/html")
+                msg.send()
+        except Exception as e:
+            success = False
+            print("❌ Error sending email:", str(e))
+
+        campaign.status = 'sent' if success else 'failed'
+        campaign.save()
+
+        return Response({'status': campaign.status})
+
+
