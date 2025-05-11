@@ -1,31 +1,61 @@
-# documents/invite_views.py
-from django.core.mail import send_mail
+from django.contrib.auth.models import User
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from django.conf import settings
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Document
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 from django.conf import settings
+from django.contrib.auth.models import User
+from .models import SignatureInvite, Document
+from .serializers import SignatureInviteSerializer
+import uuid
 
-class SendInviteView(APIView):
-    def post(self, request):
-        document_id = request.data.get('document_id')
+
+from .models import SignatureInvite, Document
+from .serializers import SignatureInviteSerializer
+import uuid
+
+
+class SignatureInviteViewSet(viewsets.ModelViewSet):
+    queryset = SignatureInvite.objects.all()
+    serializer_class = SignatureInviteSerializer
+    permission_classes = [AllowAny]  # 🔓 Allows unauthenticated send, but we still check user_id manually
+
+    def create(self, request, *args, **kwargs):
         email = request.data.get('email')
+        document_id = request.data.get('documentId')
+        user_id = request.data.get('user_id')
 
-        if not document_id or not email:
-            return Response({"error": "Missing fields"}, status=status.HTTP_400_BAD_REQUEST)
+        if not email or not document_id or not user_id:
+            return Response({'detail': 'Missing fields.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             document = Document.objects.get(id=document_id)
         except Document.DoesNotExist:
-            return Response({"error": "Document not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'Document not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Construct signing link
-        signing_link = f"{settings.FRONTEND_URL}/sign/{document_id}"
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({'detail': 'Invalid user.'}, status=status.HTTP_403_FORBIDDEN)
 
-        subject = f"Invitation to sign document: {document.title}"
-        message = f"You have been invited to sign the document.\n\nSign here: {signing_link}\n\nThank you."
-        from_email = settings.DEFAULT_FROM_EMAIL
+        # Generate secure token
+        token = str(uuid.uuid4())
 
-        send_mail(subject, message, from_email, [email])
+        invite = SignatureInvite.objects.create(
+            document=document,
+            email=email,
+            token=token
+        )
 
-        return Response({"message": "Invitation sent!"}, status=status.HTTP_200_OK)
+        serializer = self.get_serializer(invite)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    
+
+

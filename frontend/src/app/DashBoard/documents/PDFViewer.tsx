@@ -23,12 +23,16 @@ const PDFViewer: React.FC<Props> = ({
   setNumPages,
   onPdfClick,
 }) => {
-  const pageRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleClick = (e: React.MouseEvent) => {
-    if (!pageRef.current || !onPdfClick) return;
+    if (!containerRef.current || !onPdfClick) return;
 
-    const rect = pageRef.current.getBoundingClientRect();
+    // Get canvas element inside rendered page
+    const canvas = containerRef.current.querySelector('canvas');
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
@@ -45,8 +49,12 @@ const PDFViewer: React.FC<Props> = ({
         onLoadSuccess={({ numPages }) => setNumPages(numPages)}
         loading={<p className="text-center text-gray-500">Loading PDF...</p>}
       >
-        <div ref={pageRef} onClick={handleClick} className="cursor-crosshair">
-          <Page pageNumber={pageNumber} width={800} />
+        <div
+          ref={containerRef}
+          onClick={handleClick}
+          className="cursor-crosshair"
+        >
+          <Page pageNumber={pageNumber} width={800} renderMode="canvas" />
         </div>
       </Document>
 

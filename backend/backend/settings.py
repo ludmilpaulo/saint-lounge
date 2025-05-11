@@ -15,6 +15,14 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+ADMINS = [
+    ("Support Team", "support@maindodigital.com"),
+]
+
+
+FRONTEND_URL = "http://localhost:3000"
+
+
 
 # Application definition
 

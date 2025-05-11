@@ -1,6 +1,7 @@
 # documents/serializers.py
+# serializers.py
 from rest_framework import serializers
-from .models import Document, Signature
+from .models import Document, Signature, SignatureInvite
 
 class DocumentSerializer(serializers.ModelSerializer):
     file_url = serializers.SerializerMethodField()
@@ -18,7 +19,27 @@ class DocumentSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         return request.build_absolute_uri(obj.signed_file.url) if obj.signed_file else None
 
+class SignatureInviteSerializer(serializers.ModelSerializer):
+    document = DocumentSerializer(read_only=True)  # ✅ Nested serializer
+
+    class Meta:
+        model = SignatureInvite
+        fields = [
+            'id', 'document', 'email', 'token', 'signed', 
+            'sent_at', 'created_at', 'invited_by'
+        ]
+        
+    def get_file_url(self, obj):
+        request = self.context.get('request')
+        if request and obj.file:
+            return request.build_absolute_uri(obj.file.url)
+        return None
+
+
+
 class SignatureSerializer(serializers.ModelSerializer):
     class Meta:
         model = Signature
         fields = '__all__'
+        
+        

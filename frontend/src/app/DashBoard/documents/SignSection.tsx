@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import {
@@ -10,12 +10,13 @@ import {
   clearElements,
 } from '@/redux/slices/signatureSlice';
 import { Document as Doc } from '@/services/documentService';
-import { submitSignature } from '@/services/signatureService';
+
 import { v4 as uuidv4 } from 'uuid';
 import PDFViewer from './PDFViewer';
 import DraggableElement from './DraggableElement';
 import SignaturePadModal from './SignaturePadModal';
 import { baseAPI } from '@/utils/variables';
+import { PDFDocument } from 'pdf-lib';
 
 interface Props {
   documents: Doc[];
@@ -31,7 +32,7 @@ const SignSection: React.FC<Props> = ({ documents, onLoading }) => {
   const [pageNumber, setPageNumber] = useState(1);
   const [numPages, setNumPages] = useState(1);
   const [clickedPosition, setClickedPosition] = useState<{ x: number; y: number } | null>(null);
-  const [viewerDims, setViewerDims] = useState({ width: 800, height: 1100 });
+  const [viewerDims, setViewerDims] = useState<{ width: number; height: number }>({ width: 800, height: 1100 });
 
   const currentPageElements = useMemo(() => {
     return elements.filter((el) => el.page === pageNumber);
@@ -86,35 +87,55 @@ const SignSection: React.FC<Props> = ({ documents, onLoading }) => {
     onLoading(true);
 
     try {
-      for (const el of elements) {
-        const res = await fetch(el.src);
-        const blob = await res.blob();
+      const pdfBytes = await fetch(selectedDoc.file_url).then((res) => res.arrayBuffer());
+      const pdfDoc = await PDFDocument.load(pdfBytes);
 
-        await submitSignature({
-          documentId: selectedDoc.id,
-          signatureImage: blob,
-          x: el.x,
-          y: el.y,
-          pageNumber: el.page,
-          userId: auth_user.user_id,
-          renderWidth: viewerDims.width,
-          renderHeight: viewerDims.height,
+      for (const el of elements) {
+        const page = pdfDoc.getPages()[el.page - 1];
+        const pngImageBytes = await fetch(el.src).then((r) => r.arrayBuffer());
+        const embedded = await pdfDoc.embedPng(pngImageBytes);
+
+        const { width: pageW, height: pageH } = page.getSize();
+
+        const x = (el.x / viewerDims.width) * pageW;
+        const y = pageH - (el.y / viewerDims.height) * pageH;
+
+        const sigWidth = (el.width / viewerDims.width) * pageW;
+        const sigHeight = (el.height / viewerDims.height) * pageH;
+
+        page.drawImage(embedded, {
+          x,
+          y: y - sigHeight,
+          width: sigWidth,
+          height: sigHeight,
         });
       }
 
-      alert('Document signed!');
+      const signedBytes = await pdfDoc.save();
+      const signedBlob = new Blob([signedBytes as BlobPart], { type: 'application/pdf' });
+
+      const formData = new FormData();
+      formData.append('file', signedBlob, 'signed.pdf');
+      formData.append('document_id', selectedDoc.id.toString());
+      formData.append('user_id', auth_user.user_id.toString());
+
+      const res = await fetch(`${baseAPI}/doc/save-signed-pdf/`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error('Failed to upload signed PDF');
+
+      alert('Document signed and uploaded!');
       dispatch(clearElements());
 
-      const updated = await fetch(`${baseAPI}/doc/documents/${selectedDoc.id}/`).then((res) =>
-        res.json()
-      );
-
+      const updated = await fetch(`${baseAPI}/doc/documents/${selectedDoc.id}/`).then((r) => r.json());
       if (updated.signed_file) {
         window.open(updated.signed_file, '_blank');
       }
     } catch (error) {
       console.error(error);
-      alert('Failed to sign the document.');
+      alert('Error signing document.');
     } finally {
       onLoading(false);
     }

@@ -42,4 +42,22 @@ class OTP(models.Model):
         code = ''.join(random.choices('0123456789', k=6))
         otp = OTP.objects.create(email=email, code=code)
         return otp
-# models.py placeholder (Document, Signature, OTP)
+
+
+import uuid
+
+class SignatureInvite(models.Model):
+    document = models.ForeignKey(Document, on_delete=models.CASCADE)
+    email = models.EmailField()
+    token = models.CharField(max_length=255, unique=True, default=uuid.uuid4)
+    sent_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)  # ✅ add this
+    signed = models.BooleanField(default=False)
+    invited_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+
+    def __str__(self):
+        return f"Invite to {self.email} for {self.document.title}"
+
+        
+
