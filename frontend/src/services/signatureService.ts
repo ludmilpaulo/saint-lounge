@@ -6,9 +6,10 @@ export interface SignaturePayload {
   x: number;
   y: number;
   pageNumber: number;
-  userId: number; // 👈 add this
+  userId: number;
+  renderWidth: number;
+  renderHeight: number;
 }
-
 export interface SignatureResponse {
   id: number;
   document: number;

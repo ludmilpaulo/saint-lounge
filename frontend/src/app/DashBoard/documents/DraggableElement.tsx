@@ -1,77 +1,94 @@
 'use client';
-import React, { useState } from 'react';
-import { Rnd, RndResizeCallback, RndDragCallback } from 'react-rnd';
+import React, { useRef, useState, useEffect } from 'react';
+import Moveable from 'react-moveable';
 import NextImage from 'next/image';
 
 interface Props {
   id: string;
   src: string;
+  defaultX: number;
+  defaultY: number;
+  defaultWidth: number;
+  defaultHeight: number;
   onDelete: (id: string) => void;
   onPositionChange: (id: string, x: number, y: number) => void;
-  defaultX?: number;
-  defaultY?: number;
+  onResizeChange: (id: string, width: number, height: number, x: number, y: number) => void;
 }
 
 const DraggableElement: React.FC<Props> = ({
   id,
   src,
+  defaultX,
+  defaultY,
+  defaultWidth,
+  defaultHeight,
   onDelete,
   onPositionChange,
-  defaultX = 100,
-  defaultY = 100,
+  onResizeChange,
 }) => {
-  const [showToolbar, setShowToolbar] = useState(false);
-  const [isResizable, setIsResizable] = useState(true);
-  const [rotation, setRotation] = useState(0);
-  const [position, setPosition] = useState({ x: defaultX, y: defaultY });
-  const [size, setSize] = useState({ width: 150, height: 50 });
+  const targetRef = useRef<HTMLDivElement>(null);
+  const [frame, setFrame] = useState({
+    translate: [defaultX, defaultY] as [number, number],
+    width: defaultWidth,
+    height: defaultHeight,
+    rotate: 0,
+  });
 
-  const handleDragStop: RndDragCallback = (_, d) => {
-    setPosition({ x: d.x, y: d.y });
-    onPositionChange(id, d.x, d.y);
-  };
+  const [hovered, setHovered] = useState(false);
 
-  const handleResizeStop: RndResizeCallback = (_, __, ref, ___, pos) => {
-    setSize({
-      width: parseInt(ref.style.width),
-      height: parseInt(ref.style.height),
+  useEffect(() => {
+    setFrame({
+      translate: [defaultX, defaultY],
+      width: defaultWidth,
+      height: defaultHeight,
+      rotate: 0,
     });
-    setPosition(pos);
-    onPositionChange(id, pos.x, pos.y);
-  };
+  }, [defaultX, defaultY, defaultWidth, defaultHeight]);
 
   return (
-    <Rnd
-      size={{ width: size.width, height: size.height }}
-      position={position}
-      bounds="parent"
-      enableResizing={isResizable}
-      onDragStop={handleDragStop}
-      onResizeStop={handleResizeStop}
+    <div
+      className="absolute top-0 left-0"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       <div
-        className="relative w-full h-full"
-        onMouseDown={() => setShowToolbar(true)}
-        onMouseLeave={() => setShowToolbar(false)}
-        style={{ transform: `rotate(${rotation}deg)` }}
+        ref={targetRef}
+        style={{
+          width: `${frame.width}px`,
+          height: `${frame.height}px`,
+          transform: `translate(${frame.translate[0]}px, ${frame.translate[1]}px) rotate(${frame.rotate}deg)`,
+          position: 'absolute',
+          border: hovered ? '1px dashed #4f46e5' : '1px solid transparent',
+        }}
+        className="rounded overflow-hidden"
       >
         <NextImage
           src={src}
           alt="Signature"
           fill
-          className="object-contain rounded"
+          className="object-contain pointer-events-none"
         />
 
-        {showToolbar && (
-          <div className="absolute -top-8 right-0 flex gap-2 bg-white border rounded shadow px-2 py-1 z-50">
-            <button onClick={() => setRotation((r) => r - 15)} className="text-xs text-gray-600">
+        {/* Toolbar on hover */}
+        {hovered && (
+          <div className="absolute -top-10 right-0 flex gap-2 bg-white border rounded shadow px-2 py-1 z-50">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setFrame((prev) => ({ ...prev, rotate: prev.rotate - 15 }));
+              }}
+              className="text-xs text-gray-600"
+            >
               ⟲
             </button>
-            <button onClick={() => setRotation((r) => r + 15)} className="text-xs text-gray-600">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setFrame((prev) => ({ ...prev, rotate: prev.rotate + 15 }));
+              }}
+              className="text-xs text-gray-600"
+            >
               ⟳
-            </button>
-            <button onClick={() => setIsResizable((r) => !r)} className="text-xs text-gray-600">
-              {isResizable ? '🔓' : '🔒'}
             </button>
             <button
               onClick={(e) => {
@@ -85,7 +102,53 @@ const DraggableElement: React.FC<Props> = ({
           </div>
         )}
       </div>
-    </Rnd>
+
+      {/* Moveable shown only on hover */}
+      {hovered && (
+        <Moveable
+          target={targetRef}
+          draggable
+          resizable
+          rotatable
+          renderDirections={['nw', 'ne', 'sw', 'se']} // corners only
+          snapCenter
+          snappable
+          snapThreshold={5}
+          snapGridWidth={10}
+          snapGridHeight={10}
+          origin={false}
+          edge={false}
+          onDrag={({ beforeTranslate }) => {
+            setFrame((prev) => ({ ...prev, translate: beforeTranslate as [number, number] }));
+          }}
+          onDragEnd={({ lastEvent }) => {
+            if (lastEvent) {
+              const [x, y] = lastEvent.beforeTranslate as [number, number];
+              onPositionChange(id, x, y);
+            }
+          }}
+          onResize={({ width, height, drag }) => {
+            const [x, y] = drag.beforeTranslate as [number, number];
+            setFrame((prev) => ({
+              ...prev,
+              width,
+              height,
+              translate: [x, y],
+            }));
+          }}
+          onResizeEnd={({ lastEvent }) => {
+            if (lastEvent) {
+              const { width, height } = lastEvent;
+              const [x, y] = lastEvent.drag.beforeTranslate as [number, number];
+              onResizeChange(id, width, height, x, y);
+            }
+          }}
+          onRotate={({ beforeRotate }) => {
+            setFrame((prev) => ({ ...prev, rotate: beforeRotate }));
+          }}
+        />
+      )}
+    </div>
   );
 };
 

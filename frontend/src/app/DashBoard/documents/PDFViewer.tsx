@@ -12,7 +12,7 @@ interface Props {
   numPages: number;
   setPageNumber: (page: number) => void;
   setNumPages: (num: number) => void;
-  onPdfClick?: (x: number, y: number) => void;
+  onPdfClick?: (x: number, y: number, renderWidth: number, renderHeight: number) => void;
 }
 
 const PDFViewer: React.FC<Props> = ({
@@ -32,7 +32,10 @@ const PDFViewer: React.FC<Props> = ({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    onPdfClick(x, y);
+    const width = rect.width;
+    const height = rect.height;
+
+    onPdfClick(x, y, width, height);
   };
 
   return (

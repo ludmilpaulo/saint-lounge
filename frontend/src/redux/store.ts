@@ -2,9 +2,11 @@ import { persistReducer, PersistConfig } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slices/authSlice";
+import signatureReducer from './slices/signatureSlice';
 
 const rootReducer = combineReducers({
   auth: authReducer,
+  signature: signatureReducer,
 });
 
 type RootReducerType = ReturnType<typeof rootReducer>;

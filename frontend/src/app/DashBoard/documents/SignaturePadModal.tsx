@@ -15,8 +15,8 @@ const SignaturePadModal: React.FC<Props> = ({
   onClose,
   onSave,
   fonts = ['Great Vibes', 'Pacifico', 'Caveat', 'Dancing Script'],
-  canvasWidth = 500,
-  canvasHeight = 150,
+  canvasWidth = 400,
+  canvasHeight = 100,
 }) => {
   const [mode, setMode] = useState<'draw' | 'type' | 'upload'>('draw');
   const sigPadRef = useRef<SignaturePad | null>(null);
@@ -46,7 +46,7 @@ const SignaturePadModal: React.FC<Props> = ({
 
     const reader = new FileReader();
     reader.onload = () => {
-      const img = new window.Image(); // ✅ native Image, not NextImage
+      const img = new window.Image();
       img.src = reader.result as string;
       img.crossOrigin = 'anonymous';
 
@@ -56,11 +56,16 @@ const SignaturePadModal: React.FC<Props> = ({
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
+        const targetWidth = canvasWidth;
+        const targetHeight = canvasHeight;
 
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+
+        ctx.clearRect(0, 0, targetWidth, targetHeight);
+        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+        const imgData = ctx.getImageData(0, 0, targetWidth, targetHeight);
         const data = imgData.data;
 
         for (let i = 0; i < data.length; i += 4) {
@@ -76,29 +81,39 @@ const SignaturePadModal: React.FC<Props> = ({
   };
 
   const handleSave = () => {
-    let dataUrl = '';
-
     if (mode === 'draw' && sigPadRef.current && !sigPadRef.current.isEmpty()) {
-      dataUrl = sigPadRef.current.getTrimmedCanvas().toDataURL('image/png');
-    } else if (mode === 'type') {
+      const dataUrl = sigPadRef.current.getTrimmedCanvas().toDataURL('image/png');
+      onSave(dataUrl);
+      onClose();
+      return;
+    }
+
+    if (mode === 'type') {
       const canvas = document.createElement('canvas');
       canvas.width = canvasWidth;
       canvas.height = canvasHeight;
       const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.fillStyle = '#000';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.font = `48px '${selectedFont}'`;
+      if (!ctx) return;
+
+      ctx.fillStyle = '#000';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = `48px "${selectedFont}", sans-serif`;
+
+      // Ensure font is loaded before drawing
+      document.fonts.ready.then(() => {
         ctx.fillText(typedText, canvas.width / 2, canvas.height / 2);
-        dataUrl = canvas.toDataURL('image/png');
-      }
-    } else if (mode === 'upload' && uploadedImage) {
-      dataUrl = uploadedImage;
+        const dataUrl = canvas.toDataURL('image/png');
+        onSave(dataUrl);
+        onClose();
+      });
+      return;
     }
 
-    if (dataUrl) onSave(dataUrl);
-    onClose();
+    if (mode === 'upload' && uploadedImage) {
+      onSave(uploadedImage);
+      onClose();
+    }
   };
 
   return (
@@ -106,6 +121,7 @@ const SignaturePadModal: React.FC<Props> = ({
       <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg space-y-4">
         <h2 className="text-lg font-bold">Create Signature</h2>
 
+        {/* Tabs */}
         <div className="flex gap-2">
           {['draw', 'type', 'upload'].map((tab) => (
             <button
@@ -120,6 +136,7 @@ const SignaturePadModal: React.FC<Props> = ({
           ))}
         </div>
 
+        {/* Draw mode */}
         {mode === 'draw' && (
           <div>
             <SignaturePad
@@ -136,6 +153,7 @@ const SignaturePadModal: React.FC<Props> = ({
           </div>
         )}
 
+        {/* Type mode */}
         {mode === 'type' && (
           <div className="space-y-2">
             <input
@@ -163,25 +181,30 @@ const SignaturePadModal: React.FC<Props> = ({
           </div>
         )}
 
+        {/* Upload mode */}
         {mode === 'upload' && (
           <div className="space-y-2">
             <input type="file" accept="image/*" onChange={handleUpload} />
             <canvas ref={canvasRef} className="hidden" />
             {uploadedImage && (
-              <div className="relative w-full h-40 border rounded overflow-hidden">
+              <div className="relative w-full h-32 border rounded overflow-hidden">
                 <NextImage src={uploadedImage} alt="Preview" fill className="object-contain" />
               </div>
             )}
           </div>
         )}
 
+        {/* Actions */}
         <div className="flex justify-end gap-2 pt-4">
           <button onClick={onClose} className="text-gray-700 px-4 py-2">
             Cancel
           </button>
           <button
             onClick={handleSave}
-            disabled={(mode === 'draw' && sigPadRef.current?.isEmpty()) || (mode === 'upload' && !uploadedImage)}
+            disabled={
+              (mode === 'draw' && sigPadRef.current?.isEmpty()) ||
+              (mode === 'upload' && !uploadedImage)
+            }
             className="bg-blue-600 text-white px-4 py-2 rounded"
           >
             Save
