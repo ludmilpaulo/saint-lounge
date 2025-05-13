@@ -35,10 +35,12 @@ export default function UserSignPage() {
   const [viewerDims, setViewerDims] = useState({ width: 800, height: 1100 });
 
   useEffect(() => {
-    axios.get(`${baseAPI}/doc/invite/${token}/`).then(({ data }) => {
-      setDocumentUrl(data.document.file_url);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    axios.get(`${baseAPI}/doc/invite/${token}/`)
+      .then(({ data }) => {
+        setDocumentUrl(data.document.file_url);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, [token]);
 
   const handlePdfClick = (x: number, y: number, width: number, height: number) => {
@@ -49,7 +51,7 @@ export default function UserSignPage() {
 
   const handleSaveSignature = (src: string) => {
     if (!clickedPosition) return;
-    setSignatureElements((prev) => [
+    setSignatureElements(prev => [
       ...prev,
       {
         id: uuidv4(),
@@ -68,39 +70,41 @@ export default function UserSignPage() {
   };
 
   const currentPageElements = useMemo(
-    () => signatureElements.filter((el) => el.page === pageNumber),
+    () => signatureElements.filter(el => el.page === pageNumber),
     [signatureElements, pageNumber]
   );
 
   const handleFlattenUpload = async () => {
-    const pdfDoc = await PDFDocument.load(await fetch(documentUrl).then((r) => r.arrayBuffer()));
+    const pdfDoc = await PDFDocument.load(await fetch(documentUrl).then(r => r.arrayBuffer()));
 
     for (const sig of signatureElements) {
-      const img = await pdfDoc.embedPng(await fetch(sig.src).then((r) => r.arrayBuffer()));
+      const img = await pdfDoc.embedPng(await fetch(sig.src).then(r => r.arrayBuffer()));
       const page = pdfDoc.getPage(sig.page - 1);
-      const { width, height } = page.getSize();
-      const scaleX = width / viewerDims.width;
-      const scaleY = height / viewerDims.height;
+      const { width: pdfWidth, height: pdfHeight } = page.getSize();
+
+      const scaleX = pdfWidth / viewerDims.width;
+      const scaleY = pdfHeight / viewerDims.height;
+
+      const pdfX = sig.x * scaleX;
+      const pdfY = pdfHeight - (sig.y + sig.height) * scaleY;
 
       page.drawImage(img, {
-        x: sig.x * scaleX,
-        y: height - sig.y * scaleY - sig.height * scaleY,
+        x: pdfX,
+        y: pdfY,
         width: sig.width * scaleX,
         height: sig.height * scaleY,
         rotate: degrees(sig.rotation),
       });
     }
 
-    const finalBytes = await pdfDoc.save();
-    const signedBlob = new Blob([finalBytes as BlobPart], { type: 'application/pdf' });
-
-    
+    const finalPdf = await pdfDoc.save();
+    const blob = new Blob([finalPdf], { type: 'application/pdf' });
 
     const formData = new FormData();
-    formData.append('signed_pdf', signedBlob, 'signed-document.pdf');
+    formData.append('signed_pdf', blob, 'signed-document.pdf');
 
     await axios.post(`${baseAPI}/doc/invite/${token}/sign/`, formData);
-    alert('✅ Successfully signed!');
+    alert('✅ Document signed and uploaded!');
   };
 
   if (loading) return <div className="text-center py-10 text-gray-500">Loading document...</div>;
@@ -119,7 +123,23 @@ export default function UserSignPage() {
           onPdfClick={handlePdfClick}
         />
 
-        {currentPageElements.map((el) => (
+        {/* 🔍 Debug red box at click */}
+        {clickedPosition && (
+          <div
+            className="absolute border border-red-600 bg-red-200/30"
+            style={{
+              left: clickedPosition.x,
+              top: clickedPosition.y,
+              width: 180,
+              height: 60,
+              zIndex: 50,
+            }}
+          >
+            <span className="text-xs text-red-800 absolute bottom-0 right-0 p-1">click</span>
+          </div>
+        )}
+
+        {currentPageElements.map(el => (
           <div key={el.id} className="absolute top-0 left-0 z-10">
             <DraggableElement
               id={el.id}
@@ -128,41 +148,31 @@ export default function UserSignPage() {
               defaultY={el.y}
               defaultWidth={el.width}
               defaultHeight={el.height}
-              onDelete={(id) => setSignatureElements((s) => s.filter((e) => e.id !== id))}
+              onDelete={id => setSignatureElements(s => s.filter(e => e.id !== id))}
               onPositionChange={(id, x, y) =>
-                setSignatureElements((s) =>
-                  s.map((e) => (e.id === id ? { ...e, x, y } : e))
-                )
+                setSignatureElements(s => s.map(e => e.id === id ? { ...e, x, y } : e))
               }
               onResizeChange={(id, w, h, x, y) =>
-                setSignatureElements((s) =>
-                  s.map((e) => (e.id === id ? { ...e, width: w, height: h, x, y } : e))
-                )
+                setSignatureElements(s => s.map(e => e.id === id ? { ...e, width: w, height: h, x, y } : e))
               }
             >
               <FloatingToolbar
-                onDelete={() => setSignatureElements((s) => s.filter((e) => e.id !== el.id))}
+                onDelete={() => setSignatureElements(s => s.filter(e => e.id !== el.id))}
                 isResizable={el.isResizable}
                 onToggleResize={() =>
-                  setSignatureElements((s) =>
-                    s.map((e) =>
-                      e.id === el.id ? { ...e, isResizable: !e.isResizable } : e
-                    )
-                  )
+                  setSignatureElements(s => s.map(e =>
+                    e.id === el.id ? { ...e, isResizable: !e.isResizable } : e
+                  ))
                 }
                 onRotateLeft={() =>
-                  setSignatureElements((s) =>
-                    s.map((e) =>
-                      e.id === el.id ? { ...e, rotation: e.rotation - 15 } : e
-                    )
-                  )
+                  setSignatureElements(s => s.map(e =>
+                    e.id === el.id ? { ...e, rotation: e.rotation - 15 } : e
+                  ))
                 }
                 onRotateRight={() =>
-                  setSignatureElements((s) =>
-                    s.map((e) =>
-                      e.id === el.id ? { ...e, rotation: e.rotation + 15 } : e
-                    )
-                  )
+                  setSignatureElements(s => s.map(e =>
+                    e.id === el.id ? { ...e, rotation: e.rotation + 15 } : e
+                  ))
                 }
               />
             </DraggableElement>

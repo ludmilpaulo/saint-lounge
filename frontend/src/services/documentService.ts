@@ -5,6 +5,7 @@ export interface Document {
   id: number;
   title: string;
   file_url: string;
+  signed_file?: string;
   signed_file_url?: string | null;
   is_signed: boolean;
   created_at: string;

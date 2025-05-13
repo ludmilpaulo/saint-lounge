@@ -73,7 +73,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import SignatureInvite, Document
 from .serializers import SignatureInviteSerializer
-
 class SignInviteView(APIView):
     def post(self, request, token):
         invite = get_object_or_404(SignatureInvite, token=token)
@@ -85,16 +84,20 @@ class SignInviteView(APIView):
         if not signed_pdf:
             return Response({"detail": "No signed PDF provided."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Save the signed file to the Document
+        # Read content before saving to avoid empty reads
+        file_content = signed_pdf.read()
+        file_name = signed_pdf.name
+
+        # Save the file to the Document
         document = invite.document
-        document.signed_file.save(signed_pdf.name, signed_pdf)
+        document.signed_file.save(file_name, ContentFile(file_content))
         document.is_signed = True
         document.save()
 
         invite.signed = True
         invite.save()
 
-        # Compose email
+        # Email
         subject = f"Signed Document: {document.title}"
         recipient = invite.email
         context = {
@@ -112,11 +115,8 @@ class SignInviteView(APIView):
             [recipient],
         )
         message.attach_alternative(html_content, "text/html")
-        message.attach(document.signed_file.name, signed_pdf.read(), "application/pdf")
+        message.attach(file_name, file_content, "application/pdf")
         message.send()
 
         return Response({"detail": "Document signed and emailed successfully."}, status=status.HTTP_200_OK)
-
-
-
 
